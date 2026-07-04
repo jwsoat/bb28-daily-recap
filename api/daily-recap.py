@@ -7,7 +7,6 @@ import os
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
 
-import feedparser
 import httpx
 import resend
 from anthropic import Anthropic

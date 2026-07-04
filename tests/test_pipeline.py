@@ -50,7 +50,7 @@ def _make_deps(
 
 
 def test_happy_path_sends_email_with_correct_day_and_outline():
-    now = datetime(2026, 7, 12, 15, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 13, 3, 0, tzinfo=timezone.utc)
     post = RawPost(source="x:a", text="Alex won HOH", published_at=now)
     rss_results = []
     x_results = [SourceResult(source="x:a", posts=[post], found_any=True)]
