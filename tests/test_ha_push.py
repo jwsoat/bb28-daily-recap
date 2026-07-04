@@ -5,8 +5,8 @@ from bb28_recap.models import Fact, HAServiceCall
 
 
 class FakeResponse:
-    def __init__(self, status):
-        self.status = status
+    def __init__(self, status_code):
+        self.status_code = status_code
 
 
 class FakeSession:
@@ -19,7 +19,7 @@ class FakeSession:
         result = self._responses[len(self.calls) - 1]
         if isinstance(result, Exception):
             raise result
-        return FakeResponse(result)
+        return FakeResponse(status_code=result)
 
 
 def test_build_ha_service_calls_maps_status_fact():

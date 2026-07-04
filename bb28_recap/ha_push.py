@@ -37,16 +37,16 @@ def build_ha_service_calls(facts: list[Fact]) -> list[HAServiceCall]:
 async def push_service_calls(
     session, base_url: str, token: str, calls: list[HAServiceCall]
 ) -> list[PushResult]:
-    """session must expose an async post(url, json, headers) -> response with .status."""
+    """session must expose an async post(url, json, headers) -> response with .status_code."""
     results = []
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     for call in calls:
         url = f"{base_url}/api/services/{call.domain}/{call.service}"
         try:
             response = await session.post(url, json=call.data, headers=headers)
-            if response.status >= 400:
+            if response.status_code >= 400:
                 results.append(
-                    PushResult(call=call, success=False, error=f"HTTP {response.status}")
+                    PushResult(call=call, success=False, error=f"HTTP {response.status_code}")
                 )
             else:
                 results.append(PushResult(call=call, success=True))
