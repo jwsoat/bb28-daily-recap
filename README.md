@@ -25,3 +25,23 @@ Runs daily via Vercel Cron at 22:00 UTC (3pm PT).
 entry point (`api/daily-recap.py`) has no automated tests (it's the one place
 real network clients get constructed) — verify it manually after deploying
 with real secrets.
+
+## Manual smoke test (run this after deploying with real secrets)
+
+There is no automated test for `api/daily-recap.py` - it's the one place
+real credentials and network calls happen. After deploying to Vercel with
+all 7 env vars set:
+
+1. Trigger the function manually: visit `https://<your-deployment>.vercel.app/api/daily-recap`
+   in a browser, or `curl` it.
+2. Check it returns `200 OK`.
+3. Check `info@jwsoat.com` received an email within a minute or two.
+4. Check the email's "Auto-updated" section against your actual HA sensors
+   (Settings -> Devices & Services -> Big Brother 28) to confirm the push
+   actually landed.
+5. Check Vercel's function logs (Vercel dashboard -> your project -> Logs)
+   for any warnings about missing sources or failed HA pushes.
+6. If `twikit`'s login/tweet-fetch API doesn't match what's implemented in
+   `api/daily-recap.py` (see the note in `TwikitXClient`), the logs will
+   show the exact error - adjust the method calls there without touching
+   any file under `bb28_recap/` (that's all covered by pytest already).
