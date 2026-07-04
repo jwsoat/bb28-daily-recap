@@ -62,3 +62,18 @@ def test_parse_extraction_response_raises_on_unknown_fact_type():
     response = json.dumps([{"housemate": "Alex", "fact_type": "bogus"}])
     with pytest.raises(InvalidExtractionResponseError):
         parse_extraction_response(response)
+
+
+def test_parse_extraction_response_raises_on_string_array_element():
+    with pytest.raises(InvalidExtractionResponseError):
+        parse_extraction_response('["just a string"]')
+
+
+def test_parse_extraction_response_raises_on_int_array_element():
+    with pytest.raises(InvalidExtractionResponseError):
+        parse_extraction_response('[123]')
+
+
+def test_parse_extraction_response_raises_on_null_array_element():
+    with pytest.raises(InvalidExtractionResponseError):
+        parse_extraction_response('[null]')

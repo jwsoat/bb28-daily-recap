@@ -45,6 +45,10 @@ def parse_extraction_response(response_text: str) -> list[Fact]:
 
     facts = []
     for item in raw_facts:
+        if not isinstance(item, dict):
+            raise InvalidExtractionResponseError(
+                f"Expected each array element to be an object, got: {item!r}"
+            )
         fact_type = item.get("fact_type")
         if fact_type not in ("status", "have_not", "jury"):
             raise InvalidExtractionResponseError(f"Unknown fact_type: {fact_type!r}")
