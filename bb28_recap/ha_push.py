@@ -1,0 +1,55 @@
+"""Turn extracted facts into HA REST service-call payloads and push them."""
+from __future__ import annotations
+
+from .models import Fact, HAServiceCall, PushResult
+
+
+def build_ha_service_calls(facts: list[Fact]) -> list[HAServiceCall]:
+    calls = []
+    for fact in facts:
+        if fact.fact_type == "status":
+            calls.append(
+                HAServiceCall(
+                    domain="big_brother_28",
+                    service="set_housemate_status",
+                    data={"name": fact.housemate, "status": fact.status},
+                )
+            )
+        elif fact.fact_type == "have_not":
+            calls.append(
+                HAServiceCall(
+                    domain="big_brother_28",
+                    service="set_have_not",
+                    data={"name": fact.housemate, "is_have_not": bool(fact.value)},
+                )
+            )
+        elif fact.fact_type == "jury":
+            calls.append(
+                HAServiceCall(
+                    domain="big_brother_28",
+                    service="set_jury_status",
+                    data={"name": fact.housemate, "is_jury_member": bool(fact.value)},
+                )
+            )
+    return calls
+
+
+async def push_service_calls(
+    session, base_url: str, token: str, calls: list[HAServiceCall]
+) -> list[PushResult]:
+    """session must expose an async post(url, json, headers) -> response with .status."""
+    results = []
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    for call in calls:
+        url = f"{base_url}/api/services/{call.domain}/{call.service}"
+        try:
+            response = await session.post(url, json=call.data, headers=headers)
+            if response.status >= 400:
+                results.append(
+                    PushResult(call=call, success=False, error=f"HTTP {response.status}")
+                )
+            else:
+                results.append(PushResult(call=call, success=True))
+        except Exception as exc:  # noqa: BLE001 - any per-call failure is isolated, not fatal
+            results.append(PushResult(call=call, success=False, error=str(exc)))
+    return results
