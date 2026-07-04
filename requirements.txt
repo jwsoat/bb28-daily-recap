@@ -1,0 +1,5 @@
+twikit
+feedparser
+anthropic
+resend
+httpx
