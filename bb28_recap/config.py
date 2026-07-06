@@ -23,10 +23,9 @@ RSS_FEEDS = [
     "https://www.onlinebigbrother.com/feed/",
 ]
 
+# X_BURNER_USERNAME/PASSWORD/EMAIL intentionally excluded - X scraping is
+# disabled for now (RSS-only). Re-add them here if X scraping is re-enabled.
 REQUIRED_ENV_VARS = [
-    "X_BURNER_USERNAME",
-    "X_BURNER_PASSWORD",
-    "X_BURNER_EMAIL",
     "ANTHROPIC_API_KEY",
     "RESEND_API_KEY",
     "HA_BASE_URL",
