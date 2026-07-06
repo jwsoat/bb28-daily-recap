@@ -23,6 +23,20 @@ from bb28_recap.sources_rss import fetch_rss_source
 from bb28_recap.summarize import SUMMARY_SYSTEM_PROMPT
 
 
+def _extract_text_from_response(response) -> str:
+    """Find the first text block in a Claude response, rather than assuming
+    content[0] always is one - a differently-ordered or non-text block there
+    (e.g. thinking/refusal) would otherwise silently produce an empty string."""
+    for block in response.content:
+        if getattr(block, "type", None) == "text":
+            return block.text
+    block_types = [getattr(b, "type", type(b).__name__) for b in response.content]
+    raise RuntimeError(
+        f"Claude response had no text block (stop_reason={response.stop_reason!r}, "
+        f"block_types={block_types!r})"
+    )
+
+
 async def _fetch_all_rss(now: datetime) -> list[SourceResult]:
     results = []
     for feed_url in RSS_FEEDS:
@@ -56,7 +70,7 @@ async def _run(env: dict) -> None:
             system=EXTRACTION_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
-        return response.content[0].text
+        return _extract_text_from_response(response)
 
     async def call_claude_summarize(prompt: str) -> str:
         response = anthropic_client.messages.create(
@@ -65,7 +79,7 @@ async def _run(env: dict) -> None:
             system=SUMMARY_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
-        return response.content[0].text
+        return _extract_text_from_response(response)
 
     async def push_facts_to_ha(facts):
         calls = build_ha_service_calls(facts)
