@@ -1,2 +1,13 @@
+[project]
+name = "bb28-daily-recap"
+version = "1.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "feedparser==6.0.12",
+    "anthropic==0.116.0",
+    "resend==2.32.2",
+    "httpx==0.28.1",
+]
+
 [tool.vercel]
 entrypoint = "api.daily_recap:handler"
