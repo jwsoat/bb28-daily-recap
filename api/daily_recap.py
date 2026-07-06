@@ -91,7 +91,7 @@ async def _run(env: dict) -> None:
     async def send_email(content):
         resend.Emails.send(
             {
-                "from": "BB28 Daily Recap <onboarding@resend.dev>",
+                "from": "BB28 Daily Recap <bigbrother@mechanicfinder.co.nz>",
                 "to": [RECIPIENT_EMAIL],
                 "subject": content.subject,
                 "text": content.body,
