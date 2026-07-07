@@ -100,3 +100,15 @@ def test_keyword_before_name_picks_closest_name_when_multiple_present():
     assert len(facts) == 1
     assert facts[0].housemate == "Alex"
     assert facts[0].status == "HOH"
+
+
+def test_hoh_in_one_post_does_not_suppress_veto_in_a_different_post_same_source():
+    posts = [
+        _post("Alex wins HOH in dramatic competition"),
+        _post("Jordan wins veto competition"),
+    ]
+    # both posts use the same default source ("rss:test") from the _post helper
+    facts = match_hoh_veto_facts(posts, ["Alex", "Jordan"])
+    assert len(facts) == 2
+    statuses = {f.housemate: f.status for f in facts}
+    assert statuses == {"Alex": "HOH", "Jordan": "Veto Winner"}

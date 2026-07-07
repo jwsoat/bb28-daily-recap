@@ -33,14 +33,27 @@ from bb28_recap.sources_rss import fetch_rss_source
 load_dotenv(SCRIPT_DIR / ".env")
 
 
+def _require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        print(f"Missing required environment variable: {name} (check local/.env)")
+        sys.exit(1)
+    return value
+
+
 async def main() -> None:
-    anthropic_client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    ha_base_url = os.environ["HA_BASE_URL"]
-    ha_token = os.environ["HA_LONG_LIVED_TOKEN"]
+    anthropic_client = Anthropic(api_key=_require_env("ANTHROPIC_API_KEY"))
+    ha_base_url = _require_env("HA_BASE_URL")
+    ha_token = _require_env("HA_LONG_LIVED_TOKEN")
 
     now = datetime.now(timezone.utc)
     results = [fetch_rss_source(feed_url, now) for feed_url in RSS_FEEDS]
     posts = aggregate_sources(results)
+
+    if not posts:
+        print("No RSS posts in the last 24h - skipping Claude call.")
+        return
+
     raw_feed_text = render_raw_feed_text(posts)
 
     response = anthropic_client.messages.create(

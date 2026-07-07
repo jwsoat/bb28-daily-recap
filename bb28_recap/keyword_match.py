@@ -57,6 +57,7 @@ def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> li
     facts = []
     for post in posts:
         text_lower = post.text.lower()
+        hoh_matched_this_post = False
 
         # Check for HOH keywords first (HOH wins tie-break over Veto)
         for hoh_keyword in HOH_KEYWORDS:
@@ -75,10 +76,11 @@ def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> li
                             sources=[post.source],
                         )
                     )
-                    break  # Only one HOH per post
+                    hoh_matched_this_post = True
+                break  # Only one HOH per post
 
-        # Check for Veto keywords only if no HOH match was found
-        if not any(f.status == "HOH" and f.sources == [post.source] for f in facts):
+        # Check for Veto keywords only if no HOH match was found in this post
+        if not hoh_matched_this_post:
             for veto_keyword in VETO_KEYWORDS:
                 if veto_keyword in text_lower:
                     keyword_pos = text_lower.find(veto_keyword)

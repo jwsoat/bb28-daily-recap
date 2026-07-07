@@ -49,9 +49,17 @@ def save_seen_keys(keys: set[str]) -> None:
     SEEN_FILE.write_text(json.dumps(sorted(keys)), encoding="utf-8")
 
 
+def _require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        print(f"Missing required environment variable: {name} (check local/.env)")
+        sys.exit(1)
+    return value
+
+
 async def main() -> None:
-    ha_base_url = os.environ["HA_BASE_URL"]
-    ha_token = os.environ["HA_LONG_LIVED_TOKEN"]
+    ha_base_url = _require_env("HA_BASE_URL")
+    ha_token = _require_env("HA_LONG_LIVED_TOKEN")
 
     housemate_names = load_housemate_names()
     if not housemate_names:
