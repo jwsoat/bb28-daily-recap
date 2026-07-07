@@ -1,6 +1,6 @@
 import asyncio
 
-from bb28_recap.ha_push import build_ha_service_calls, push_service_calls
+from bb28_recap.ha_push import build_add_housemate_calls, build_ha_service_calls, push_service_calls
 from bb28_recap.models import Fact, HAServiceCall
 
 
@@ -56,6 +56,18 @@ def test_build_ha_service_calls_maps_jury_fact():
             data={"name": "Sam", "is_jury_member": True},
         )
     ]
+
+
+def test_build_add_housemate_calls_maps_each_name():
+    calls = build_add_housemate_calls(["Alex", "Jordan"])
+    assert calls == [
+        HAServiceCall(domain="big_brother_28", service="add_housemate", data={"name": "Alex"}),
+        HAServiceCall(domain="big_brother_28", service="add_housemate", data={"name": "Jordan"}),
+    ]
+
+
+def test_build_add_housemate_calls_empty_list_returns_empty():
+    assert build_add_housemate_calls([]) == []
 
 
 def test_push_service_calls_reports_success():

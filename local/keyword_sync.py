@@ -22,7 +22,7 @@ sys.path.insert(0, str(SCRIPT_DIR.parent))
 from bb28_recap.aggregate import aggregate_sources
 from bb28_recap.config import RSS_FEEDS
 from bb28_recap.dedup import filter_unseen_posts, post_key
-from bb28_recap.ha_push import build_ha_service_calls, push_service_calls
+from bb28_recap.ha_push import build_add_housemate_calls, build_ha_service_calls, push_service_calls
 from bb28_recap.keyword_match import match_hoh_veto_facts
 from bb28_recap.sources_rss import fetch_rss_source
 
@@ -92,15 +92,23 @@ async def main() -> None:
 
     facts = match_hoh_veto_facts(new_posts, housemate_aliases)
 
-    if facts:
-        calls = build_ha_service_calls(facts)
-        async with httpx.AsyncClient() as session:
+    async with httpx.AsyncClient() as session:
+        # add_housemate is idempotent - safe to re-run every time, so HA's
+        # roster self-heals (e.g. after a reinstall) within one 15-min cycle.
+        roster_calls = build_add_housemate_calls(list(housemate_aliases.keys()))
+        roster_results = await push_service_calls(session, ha_base_url, ha_token, roster_calls)
+        for result in roster_results:
+            if not result.success:
+                print(f"Failed to ensure housemate exists: {result.call.data} -> {result.error}")
+
+        if facts:
+            calls = build_ha_service_calls(facts)
             push_results = await push_service_calls(session, ha_base_url, ha_token, calls)
-        for result in push_results:
-            status = "OK" if result.success else f"FAILED: {result.error}"
-            print(f"{result.call.data} -> {status}")
-    else:
-        print("No HOH/Veto keyword matches this run.")
+            for result in push_results:
+                status = "OK" if result.success else f"FAILED: {result.error}"
+                print(f"{result.call.data} -> {status}")
+        else:
+            print("No HOH/Veto keyword matches this run.")
 
     seen_keys.update(post_key(p) for p in posts)
     save_seen_keys(seen_keys)

@@ -34,6 +34,16 @@ def build_ha_service_calls(facts: list[Fact]) -> list[HAServiceCall]:
     return calls
 
 
+def build_add_housemate_calls(names: list[str]) -> list[HAServiceCall]:
+    """Idempotent - big_brother_28.add_housemate is a no-op if the housemate
+    already exists, so this is safe to call on every run to keep HA's roster
+    in sync with local/housemates.txt (e.g. after HA gets reinstalled)."""
+    return [
+        HAServiceCall(domain="big_brother_28", service="add_housemate", data={"name": name})
+        for name in names
+    ]
+
+
 async def push_service_calls(
     session, base_url: str, token: str, calls: list[HAServiceCall]
 ) -> list[PushResult]:
