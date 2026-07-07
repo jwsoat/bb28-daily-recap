@@ -14,6 +14,7 @@ import httpx
 import resend
 from anthropic import Anthropic
 
+from bb28_recap.claude_response import extract_text_from_response
 from bb28_recap.config import RECIPIENT_EMAIL, RSS_FEEDS, load_env_config
 from bb28_recap.extract import EXTRACTION_SYSTEM_PROMPT
 from bb28_recap.ha_push import build_ha_service_calls, push_service_calls
@@ -21,20 +22,6 @@ from bb28_recap.models import SourceResult
 from bb28_recap.pipeline import run_daily_recap
 from bb28_recap.sources_rss import fetch_rss_source
 from bb28_recap.summarize import SUMMARY_SYSTEM_PROMPT
-
-
-def _extract_text_from_response(response) -> str:
-    """Find the first text block in a Claude response, rather than assuming
-    content[0] always is one - a differently-ordered or non-text block there
-    (e.g. thinking/refusal) would otherwise silently produce an empty string."""
-    for block in response.content:
-        if getattr(block, "type", None) == "text":
-            return block.text
-    block_types = [getattr(b, "type", type(b).__name__) for b in response.content]
-    raise RuntimeError(
-        f"Claude response had no text block (stop_reason={response.stop_reason!r}, "
-        f"block_types={block_types!r})"
-    )
 
 
 async def _fetch_all_rss(now: datetime) -> list[SourceResult]:
@@ -70,7 +57,7 @@ async def _run(env: dict) -> None:
             system=EXTRACTION_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
-        return _extract_text_from_response(response)
+        return extract_text_from_response(response)
 
     async def call_claude_summarize(prompt: str) -> str:
         response = anthropic_client.messages.create(
@@ -79,7 +66,7 @@ async def _run(env: dict) -> None:
             system=SUMMARY_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
-        return _extract_text_from_response(response)
+        return extract_text_from_response(response)
 
     async def push_facts_to_ha(facts):
         calls = build_ha_service_calls(facts)
