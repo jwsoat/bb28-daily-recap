@@ -45,3 +45,37 @@ all 4 env vars set:
    actually landed.
 5. Check Vercel's function logs (Vercel dashboard -> your project -> Logs)
    for any warnings about missing sources or failed HA pushes.
+
+## Local HA sync (more frequent than the daily email)
+
+Two optional local scripts push HA sensor updates far more often than the
+once-daily Vercel cron, without needing Vercel's cron-frequency limits or
+paying for extra Claude calls on every run:
+
+- `local/keyword_sync.py` — every 15 min, free, keyword-matches RSS titles
+  for HOH/Veto wins only (no Claude call).
+- `local/claude_verify_sync.py` — every 8 hours, runs the full Claude
+  extraction pass (nominations, evictions, have-not, jury, and anything the
+  keyword pass missed).
+
+### Setup
+
+1. `pip install -r requirements.txt` (installs `python-dotenv` alongside the
+   rest).
+2. Copy `local/.env.example` to `local/.env` and fill in `HA_BASE_URL`,
+   `HA_LONG_LIVED_TOKEN`, and `ANTHROPIC_API_KEY`.
+3. Copy `local/housemates.example.txt` to `local/housemates.txt` and add
+   real housemate names as they're revealed / added via the HA
+   `add_housemate` service.
+4. Schedule both scripts with Windows Task Scheduler (run from an elevated
+   PowerShell or Command Prompt, replacing the path with your actual repo
+   location):
+
+```
+schtasks /create /tn "BB28 Keyword Sync" /tr "python C:\path\to\bb28-daily-recap\local\keyword_sync.py" /sc minute /mo 15
+schtasks /create /tn "BB28 Claude Verify Sync" /tr "python C:\path\to\bb28-daily-recap\local\claude_verify_sync.py" /sc hourly /mo 8
+```
+
+5. Test each manually first: `python local/keyword_sync.py` and
+   `python local/claude_verify_sync.py` — both should run without errors
+   before relying on the scheduled tasks.
