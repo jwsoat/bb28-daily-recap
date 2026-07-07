@@ -68,3 +68,35 @@ def test_empty_posts_returns_empty():
 def test_empty_housemate_list_returns_empty():
     posts = [_post("Alex wins HOH")]
     assert match_hoh_veto_facts(posts, []) == []
+
+
+def test_matches_hoh_when_keyword_comes_before_name():
+    posts = [_post("HOH Winner: Alex")]
+    facts = match_hoh_veto_facts(posts, ["Alex", "Jordan"])
+    assert len(facts) == 1
+    assert facts[0].housemate == "Alex"
+    assert facts[0].status == "HOH"
+
+
+def test_matches_veto_when_keyword_comes_before_name():
+    posts = [_post("Veto Winner: Jordan")]
+    facts = match_hoh_veto_facts(posts, ["Alex", "Jordan"])
+    assert len(facts) == 1
+    assert facts[0].housemate == "Jordan"
+    assert facts[0].status == "Veto Winner"
+
+
+def test_matches_hoh_winner_phrase_with_name_after():
+    posts = [_post("New Head of Household: Alex Smith")]
+    facts = match_hoh_veto_facts(posts, ["Alex Smith", "Jordan"])
+    assert len(facts) == 1
+    assert facts[0].housemate == "Alex Smith"
+    assert facts[0].status == "HOH"
+
+
+def test_keyword_before_name_picks_closest_name_when_multiple_present():
+    posts = [_post("HOH Winner: Alex (Jordan and Sam were also nominated)")]
+    facts = match_hoh_veto_facts(posts, ["Alex", "Jordan", "Sam"])
+    assert len(facts) == 1
+    assert facts[0].housemate == "Alex"
+    assert facts[0].status == "HOH"

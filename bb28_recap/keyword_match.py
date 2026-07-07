@@ -26,6 +26,33 @@ VETO_KEYWORDS = [
 ]
 
 
+def _closest_name_to_position(
+    text_lower: str, keyword_pos: int, keyword_len: int, housemate_names: list[str]
+) -> str | None:
+    """Find the housemate name whose occurrence is closest (by character
+    distance, either before or after) to a keyword match at keyword_pos."""
+    best_name = None
+    best_distance = None
+
+    for name in housemate_names:
+        name_lower = name.lower()
+        name_pos = text_lower.find(name_lower)
+        if name_pos == -1:
+            continue
+
+        if name_pos < keyword_pos:
+            distance = keyword_pos - (name_pos + len(name_lower))
+        else:
+            distance = name_pos - (keyword_pos + keyword_len)
+        distance = max(distance, 0)
+
+        if best_distance is None or distance < best_distance:
+            best_distance = distance
+            best_name = name
+
+    return best_name
+
+
 def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> list[Fact]:
     facts = []
     for post in posts:
@@ -34,18 +61,10 @@ def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> li
         # Check for HOH keywords first (HOH wins tie-break over Veto)
         for hoh_keyword in HOH_KEYWORDS:
             if hoh_keyword in text_lower:
-                # Find which housemate appears before this keyword
                 keyword_pos = text_lower.find(hoh_keyword)
-                matching_name = None
-                latest_name_pos = -1
-
-                for name in housemate_names:
-                    name_lower = name.lower()
-                    name_pos = text_lower.find(name_lower)
-                    # Check if name appears before the keyword and is the closest one
-                    if name_pos != -1 and name_pos < keyword_pos and name_pos > latest_name_pos:
-                        matching_name = name
-                        latest_name_pos = name_pos
+                matching_name = _closest_name_to_position(
+                    text_lower, keyword_pos, len(hoh_keyword), housemate_names
+                )
 
                 if matching_name:
                     facts.append(
@@ -62,18 +81,10 @@ def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> li
         if not any(f.status == "HOH" and f.sources == [post.source] for f in facts):
             for veto_keyword in VETO_KEYWORDS:
                 if veto_keyword in text_lower:
-                    # Find which housemate appears before this keyword
                     keyword_pos = text_lower.find(veto_keyword)
-                    matching_name = None
-                    latest_name_pos = -1
-
-                    for name in housemate_names:
-                        name_lower = name.lower()
-                        name_pos = text_lower.find(name_lower)
-                        # Check if name appears before the keyword and is the closest one
-                        if name_pos != -1 and name_pos < keyword_pos and name_pos > latest_name_pos:
-                            matching_name = name
-                            latest_name_pos = name_pos
+                    matching_name = _closest_name_to_position(
+                        text_lower, keyword_pos, len(veto_keyword), housemate_names
+                    )
 
                     if matching_name:
                         facts.append(
