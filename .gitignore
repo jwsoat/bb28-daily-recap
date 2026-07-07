@@ -3,3 +3,6 @@ __pycache__/
 .vercel
 .pytest_cache/
 .superpowers/
+local/.env
+local/housemates.txt
+local/keyword_seen.json
