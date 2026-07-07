@@ -26,34 +26,55 @@ VETO_KEYWORDS = [
 ]
 
 
-def _closest_name_to_position(
-    text_lower: str, keyword_pos: int, keyword_len: int, housemate_names: list[str]
+def _distance_for_alias(
+    text_lower: str, alias: str, keyword_pos: int, keyword_len: int
+) -> int | None:
+    """Character distance (either direction) between an alias occurrence and
+    a keyword match, or None if the alias doesn't appear in the text."""
+    alias_lower = alias.lower()
+    alias_pos = text_lower.find(alias_lower)
+    if alias_pos == -1:
+        return None
+
+    if alias_pos < keyword_pos:
+        distance = keyword_pos - (alias_pos + len(alias_lower))
+    else:
+        distance = alias_pos - (keyword_pos + keyword_len)
+    return max(distance, 0)
+
+
+def _closest_canonical_to_position(
+    text_lower: str,
+    keyword_pos: int,
+    keyword_len: int,
+    housemate_aliases: dict[str, list[str]],
 ) -> str | None:
-    """Find the housemate name whose occurrence is closest (by character
-    distance, either before or after) to a keyword match at keyword_pos."""
-    best_name = None
+    """Find whichever housemate has an occurrence (canonical name or any of
+    their aliases) closest to a keyword match at keyword_pos."""
+    best_canonical = None
     best_distance = None
 
-    for name in housemate_names:
-        name_lower = name.lower()
-        name_pos = text_lower.find(name_lower)
-        if name_pos == -1:
-            continue
+    for canonical_name, aliases in housemate_aliases.items():
+        person_best = None
+        for name in [canonical_name, *aliases]:
+            distance = _distance_for_alias(text_lower, name, keyword_pos, keyword_len)
+            if distance is not None and (person_best is None or distance < person_best):
+                person_best = distance
 
-        if name_pos < keyword_pos:
-            distance = keyword_pos - (name_pos + len(name_lower))
-        else:
-            distance = name_pos - (keyword_pos + keyword_len)
-        distance = max(distance, 0)
+        if person_best is not None and (best_distance is None or person_best < best_distance):
+            best_distance = person_best
+            best_canonical = canonical_name
 
-        if best_distance is None or distance < best_distance:
-            best_distance = distance
-            best_name = name
-
-    return best_name
+    return best_canonical
 
 
-def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> list[Fact]:
+def match_hoh_veto_facts(
+    posts: list[RawPost], housemate_aliases: dict[str, list[str]]
+) -> list[Fact]:
+    """housemate_aliases maps each housemate's canonical name (the name used
+    for their HA sensor) to a list of extra name variants to search for in
+    post text - nicknames, full legal names, etc. A match on the canonical
+    name or any alias attributes the fact to the canonical name."""
     facts = []
     for post in posts:
         text_lower = post.text.lower()
@@ -63,8 +84,8 @@ def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> li
         for hoh_keyword in HOH_KEYWORDS:
             if hoh_keyword in text_lower:
                 keyword_pos = text_lower.find(hoh_keyword)
-                matching_name = _closest_name_to_position(
-                    text_lower, keyword_pos, len(hoh_keyword), housemate_names
+                matching_name = _closest_canonical_to_position(
+                    text_lower, keyword_pos, len(hoh_keyword), housemate_aliases
                 )
 
                 if matching_name:
@@ -84,8 +105,8 @@ def match_hoh_veto_facts(posts: list[RawPost], housemate_names: list[str]) -> li
             for veto_keyword in VETO_KEYWORDS:
                 if veto_keyword in text_lower:
                     keyword_pos = text_lower.find(veto_keyword)
-                    matching_name = _closest_name_to_position(
-                        text_lower, keyword_pos, len(veto_keyword), housemate_names
+                    matching_name = _closest_canonical_to_position(
+                        text_lower, keyword_pos, len(veto_keyword), housemate_aliases
                     )
 
                     if matching_name:

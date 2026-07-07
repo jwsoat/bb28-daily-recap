@@ -1,4 +1,15 @@
-# One housemate name per line. Blank lines and lines starting with # are ignored.
+# One housemate per line. Blank lines and lines starting with # are ignored.
 # Copy this file to housemates.txt (gitignored) and fill in real names once
-# the cast is revealed (8/7) - add new names here as add_housemate is called
-# in Home Assistant, so the keyword matcher knows who to look for.
+# the cast is revealed - add entries here as add_housemate is called in HA.
+#
+# Format: CanonicalName
+#     or:  CanonicalName: alias1, alias2, ...
+#
+# CanonicalName must match exactly what you passed to the HA add_housemate
+# service (that's the sensor name). Aliases are extra name variants to also
+# search RSS text for - full legal name, nickname, etc. A match on the
+# canonical name OR any alias attributes the fact to the canonical name.
+#
+# Examples:
+# Alex
+# Kamu: Kamuela, Kamuela Kirk

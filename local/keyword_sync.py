@@ -32,11 +32,28 @@ HOUSEMATES_FILE = SCRIPT_DIR / "housemates.txt"
 SEEN_FILE = SCRIPT_DIR / "keyword_seen.json"
 
 
-def load_housemate_names() -> list[str]:
+def load_housemate_aliases() -> dict[str, list[str]]:
+    """Parse local/housemates.txt. Each non-comment line is either just a
+    canonical name ("Alex") or "Alex: Alexander Smith, Al" - the canonical
+    name is what the HA sensor is called; anything after the colon is extra
+    name variants (nicknames, full legal names) to also search RSS text for."""
     if not HOUSEMATES_FILE.exists():
-        return []
-    lines = HOUSEMATES_FILE.read_text(encoding="utf-8").splitlines()
-    return [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]
+        return {}
+    aliases: dict[str, list[str]] = {}
+    for raw_line in HOUSEMATES_FILE.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" in line:
+            name, rest = line.split(":", 1)
+            name = name.strip()
+            extra = [alias.strip() for alias in rest.split(",") if alias.strip()]
+        else:
+            name = line
+            extra = []
+        if name:
+            aliases[name] = extra
+    return aliases
 
 
 def load_seen_keys() -> set[str]:
@@ -61,8 +78,8 @@ async def main() -> None:
     ha_base_url = _require_env("HA_BASE_URL")
     ha_token = _require_env("HA_LONG_LIVED_TOKEN")
 
-    housemate_names = load_housemate_names()
-    if not housemate_names:
+    housemate_aliases = load_housemate_aliases()
+    if not housemate_aliases:
         print("No housemate names in local/housemates.txt yet - nothing to match, exiting.")
         return
 
@@ -73,7 +90,7 @@ async def main() -> None:
     seen_keys = load_seen_keys()
     new_posts = filter_unseen_posts(posts, seen_keys)
 
-    facts = match_hoh_veto_facts(new_posts, housemate_names)
+    facts = match_hoh_veto_facts(new_posts, housemate_aliases)
 
     if facts:
         calls = build_ha_service_calls(facts)
