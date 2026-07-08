@@ -46,14 +46,14 @@ def test_build_ha_service_calls_maps_have_not_fact():
     ]
 
 
-def test_build_ha_service_calls_maps_jury_fact():
-    facts = [Fact(fact_type="jury", housemate="Sam", value=True)]
+def test_build_ha_service_calls_maps_jury_as_status_fact():
+    facts = [Fact(fact_type="status", housemate="Sam", status="Jury", sources=["x:a"])]
     calls = build_ha_service_calls(facts)
     assert calls == [
         HAServiceCall(
             domain="big_brother_28",
-            service="set_jury_status",
-            data={"name": "Sam", "is_jury_member": True},
+            service="set_housemate_status",
+            data={"name": "Sam", "status": "Jury"},
         )
     ]
 

@@ -23,14 +23,6 @@ def build_ha_service_calls(facts: list[Fact]) -> list[HAServiceCall]:
                     data={"name": fact.housemate, "is_have_not": bool(fact.value)},
                 )
             )
-        elif fact.fact_type == "jury":
-            calls.append(
-                HAServiceCall(
-                    domain="big_brother_28",
-                    service="set_jury_status",
-                    data={"name": fact.housemate, "is_jury_member": bool(fact.value)},
-                )
-            )
     return calls
 
 

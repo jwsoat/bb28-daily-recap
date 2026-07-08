@@ -10,10 +10,10 @@ EXTRACTION_SYSTEM_PROMPT = (
     "Only extract a fact if it is clearly and unambiguously stated as having happened - "
     "never guess, infer from jokes, or extract speculation/predictions. "
     "Return ONLY a JSON array, no other text. Each element must have exactly these keys: "
-    '"housemate" (string), "fact_type" (one of "status", "have_not", "jury"), '
+    '"housemate" (string), "fact_type" (one of "status", "have_not"), '
     '"status" (string, required when fact_type is "status", one of: HOH, Nominated, '
-    'Veto Competitor, Veto Winner, Eliminated - omit for other fact_types), '
-    '"value" (boolean, required when fact_type is "have_not" or "jury" - omit for "status"), '
+    'Veto Competitor, Veto Winner, Eliminated, Jury - omit for "have_not"), '
+    '"value" (boolean, required when fact_type is "have_not" - omit for "status"), '
     '"sources" (array of strings - which source tags in the feed stated this fact). '
     "If no facts are clearly stated, return an empty array []."
 )
@@ -50,7 +50,7 @@ def parse_extraction_response(response_text: str) -> list[Fact]:
                 f"Expected each array element to be an object, got: {item!r}"
             )
         fact_type = item.get("fact_type")
-        if fact_type not in ("status", "have_not", "jury"):
+        if fact_type not in ("status", "have_not"):
             raise InvalidExtractionResponseError(f"Unknown fact_type: {fact_type!r}")
         facts.append(
             Fact(

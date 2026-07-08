@@ -35,13 +35,13 @@ def test_parse_extraction_response_parses_have_not_fact():
     assert facts[0].value is True
 
 
-def test_parse_extraction_response_parses_jury_fact():
+def test_parse_extraction_response_parses_jury_as_a_status_fact():
     response = json.dumps(
-        [{"housemate": "Sam", "fact_type": "jury", "value": True, "sources": ["x:a"]}]
+        [{"housemate": "Sam", "fact_type": "status", "status": "Jury", "sources": ["x:a"]}]
     )
     facts = parse_extraction_response(response)
-    assert facts[0].fact_type == "jury"
-    assert facts[0].value is True
+    assert facts[0].fact_type == "status"
+    assert facts[0].status == "Jury"
 
 
 def test_parse_extraction_response_empty_array_returns_empty_list():

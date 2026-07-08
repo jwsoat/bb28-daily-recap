@@ -21,10 +21,10 @@ class SourceResult:
 
 @dataclass(frozen=True)
 class Fact:
-    fact_type: str  # "status" | "have_not" | "jury"
+    fact_type: str  # "status" | "have_not"
     housemate: str = ""
-    status: str = ""  # only set when fact_type == "status"
-    value: bool | None = None  # only set when fact_type in ("have_not", "jury")
+    status: str = ""  # only set when fact_type == "status" (includes "Jury")
+    value: bool | None = None  # only set when fact_type == "have_not"
     sources: list[str] = field(default_factory=list)
 
 

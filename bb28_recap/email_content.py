@@ -14,8 +14,6 @@ def render_applied_updates(push_results: list[PushResult]) -> str:
             lines.append(f"Auto-updated: {data['name']} → {data['status']}")
         elif result.call.service == "set_have_not":
             lines.append(f"Auto-updated: {data['name']} have-not → {data['is_have_not']}")
-        elif result.call.service == "set_jury_status":
-            lines.append(f"Auto-updated: {data['name']} jury → {data['is_jury_member']}")
     if not lines:
         return "No sensor updates applied today."
     return "\n".join(lines)
