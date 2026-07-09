@@ -80,3 +80,29 @@ def test_x_fetch_failure_does_not_abort_the_run():
     *fns, sent_emails = deps
     result = asyncio.run(run_daily_recap(now, *fns))
     assert len(sent_emails) == 1
+
+
+def test_blank_extraction_response_does_not_abort_the_run():
+    now = datetime(2026, 7, 12, 15, 0, tzinfo=timezone.utc)
+    post = RawPost(source="rss:b", text="Jordan nominated", published_at=now)
+    rss_results = [SourceResult(source="rss:b", posts=[post], found_any=True)]
+    deps = _make_deps(rss_results=rss_results, extraction_response="")
+    *fns, sent_emails = deps
+    result = asyncio.run(run_daily_recap(now, *fns))
+    assert len(sent_emails) == 1
+
+
+def test_extraction_call_raising_does_not_abort_the_run():
+    now = datetime(2026, 7, 12, 15, 0, tzinfo=timezone.utc)
+    post = RawPost(source="rss:b", text="Jordan nominated", published_at=now)
+    rss_results = [SourceResult(source="rss:b", posts=[post], found_any=True)]
+
+    async def raising_extract(prompt):
+        raise RuntimeError("Claude response had no text block")
+
+    deps = _make_deps(rss_results=rss_results)
+    fns = list(deps[:-1])
+    sent_emails = deps[-1]
+    fns[2] = raising_extract
+    result = asyncio.run(run_daily_recap(now, *fns))
+    assert len(sent_emails) == 1

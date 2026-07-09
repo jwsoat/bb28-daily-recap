@@ -38,8 +38,13 @@ async def run_daily_recap(
     raw_feed_text = render_raw_feed_text(posts)
     missing = missing_sources(all_results)
 
-    extraction_response = await call_claude_extract(build_extraction_prompt(raw_feed_text))
-    facts = parse_extraction_response(extraction_response)
+    try:
+        extraction_response = await call_claude_extract(build_extraction_prompt(raw_feed_text))
+        facts = parse_extraction_response(extraction_response)
+    except Exception:  # noqa: BLE001 - an extraction glitch (empty/malformed Claude
+        # response) degrades to "no facts found this run", not a crash that blocks
+        # the whole day's email - matches the RSS/X fetch failure handling above.
+        facts = []
 
     push_results = await push_facts_to_ha(facts)
 
